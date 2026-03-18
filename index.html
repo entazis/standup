@@ -1,0 +1,793 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Standup - Daily Standup Notes Generator</title>
+  <meta name="description" content="Quick and easy daily standup notes generator. Format your yesterday, today, and blockers in seconds.">
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>📋</text></svg>">
+  <style>
+    :root {
+      --bg: #0f172a;
+      --surface: #1e293b;
+      --surface-hover: #334155;
+      --border: #334155;
+      --text: #f1f5f9;
+      --text-muted: #94a3b8;
+      --accent: #3b82f6;
+      --accent-hover: #2563eb;
+      --success: #10b981;
+      --warning: #f59e0b;
+      --danger: #ef4444;
+      --radius: 12px;
+    }
+
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+      line-height: 1.6;
+    }
+
+    .container {
+      max-width: 800px;
+      margin: 0 auto;
+      padding: 2rem 1.5rem;
+    }
+
+    header {
+      text-align: center;
+      margin-bottom: 2rem;
+    }
+
+    h1 {
+      font-size: 2.5rem;
+      font-weight: 700;
+      margin-bottom: 0.5rem;
+      background: linear-gradient(135deg, var(--accent) 0%, #8b5cf6 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+
+    .subtitle {
+      color: var(--text-muted);
+      font-size: 1.1rem;
+    }
+
+    .date-display {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.5rem;
+      background: var(--surface);
+      padding: 0.5rem 1rem;
+      border-radius: var(--radius);
+      margin-top: 1rem;
+      font-size: 0.9rem;
+      color: var(--text-muted);
+    }
+
+    .main-card {
+      background: var(--surface);
+      border-radius: var(--radius);
+      padding: 1.5rem;
+      margin-bottom: 1.5rem;
+    }
+
+    .section {
+      margin-bottom: 1.5rem;
+    }
+
+    .section:last-child {
+      margin-bottom: 0;
+    }
+
+    .section-header {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      margin-bottom: 0.75rem;
+    }
+
+    .section-icon {
+      font-size: 1.25rem;
+    }
+
+    .section-title {
+      font-size: 1rem;
+      font-weight: 600;
+      color: var(--text);
+    }
+
+    .section-hint {
+      font-size: 0.8rem;
+      color: var(--text-muted);
+      margin-left: auto;
+    }
+
+    .items-list {
+      display: flex;
+      flex-direction: column;
+      gap: 0.5rem;
+    }
+
+    .item-row {
+      display: flex;
+      gap: 0.5rem;
+      align-items: flex-start;
+    }
+
+    .item-input {
+      flex: 1;
+      background: var(--bg);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 0.75rem 1rem;
+      color: var(--text);
+      font-size: 0.95rem;
+      transition: border-color 0.2s, box-shadow 0.2s;
+      resize: none;
+      min-height: 44px;
+    }
+
+    .item-input:focus {
+      outline: none;
+      border-color: var(--accent);
+      box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.2);
+    }
+
+    .item-input::placeholder {
+      color: var(--text-muted);
+    }
+
+    .remove-btn {
+      background: transparent;
+      border: none;
+      color: var(--text-muted);
+      cursor: pointer;
+      padding: 0.5rem;
+      border-radius: 6px;
+      transition: color 0.2s, background 0.2s;
+      font-size: 1.25rem;
+      line-height: 1;
+    }
+
+    .remove-btn:hover {
+      color: var(--danger);
+      background: rgba(239, 68, 68, 0.1);
+    }
+
+    .add-btn {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 0.5rem;
+      width: 100%;
+      padding: 0.75rem;
+      background: transparent;
+      border: 2px dashed var(--border);
+      border-radius: 8px;
+      color: var(--text-muted);
+      cursor: pointer;
+      transition: border-color 0.2s, color 0.2s;
+      font-size: 0.9rem;
+    }
+
+    .add-btn:hover {
+      border-color: var(--accent);
+      color: var(--accent);
+    }
+
+    .actions {
+      display: flex;
+      gap: 1rem;
+      flex-wrap: wrap;
+    }
+
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 0.5rem;
+      padding: 0.875rem 1.5rem;
+      border-radius: var(--radius);
+      font-size: 1rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.2s;
+      border: none;
+    }
+
+    .btn-primary {
+      background: var(--accent);
+      color: white;
+      flex: 1;
+      min-width: 200px;
+    }
+
+    .btn-primary:hover {
+      background: var(--accent-hover);
+      transform: translateY(-1px);
+    }
+
+    .btn-secondary {
+      background: var(--surface-hover);
+      color: var(--text);
+    }
+
+    .btn-secondary:hover {
+      background: var(--border);
+    }
+
+    .preview-section {
+      background: var(--surface);
+      border-radius: var(--radius);
+      padding: 1.5rem;
+      margin-bottom: 1.5rem;
+    }
+
+    .preview-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 1rem;
+    }
+
+    .preview-title {
+      font-size: 1rem;
+      font-weight: 600;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+
+    .format-select {
+      background: var(--bg);
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      padding: 0.5rem 0.75rem;
+      color: var(--text);
+      font-size: 0.85rem;
+      cursor: pointer;
+    }
+
+    .preview-content {
+      background: var(--bg);
+      border-radius: 8px;
+      padding: 1rem;
+      font-family: 'SF Mono', 'Fira Code', monospace;
+      font-size: 0.9rem;
+      white-space: pre-wrap;
+      word-break: break-word;
+      min-height: 100px;
+      color: var(--text-muted);
+    }
+
+    .preview-content:not(:empty) {
+      color: var(--text);
+    }
+
+    .templates-section {
+      background: var(--surface);
+      border-radius: var(--radius);
+      padding: 1.5rem;
+    }
+
+    .templates-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 1rem;
+    }
+
+    .templates-title {
+      font-size: 1rem;
+      font-weight: 600;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+
+    .templates-list {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.5rem;
+    }
+
+    .template-chip {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.5rem;
+      padding: 0.5rem 1rem;
+      background: var(--bg);
+      border: 1px solid var(--border);
+      border-radius: 20px;
+      font-size: 0.85rem;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+
+    .template-chip:hover {
+      border-color: var(--accent);
+      background: rgba(59, 130, 246, 0.1);
+    }
+
+    .template-chip .delete {
+      color: var(--text-muted);
+      font-size: 1rem;
+      margin-left: 0.25rem;
+    }
+
+    .template-chip .delete:hover {
+      color: var(--danger);
+    }
+
+    .empty-templates {
+      color: var(--text-muted);
+      font-size: 0.9rem;
+      text-align: center;
+      padding: 1rem;
+    }
+
+    .toast {
+      position: fixed;
+      bottom: 2rem;
+      left: 50%;
+      transform: translateX(-50%) translateY(100px);
+      background: var(--success);
+      color: white;
+      padding: 1rem 1.5rem;
+      border-radius: var(--radius);
+      font-weight: 500;
+      opacity: 0;
+      transition: all 0.3s ease;
+      z-index: 1000;
+    }
+
+    .toast.show {
+      transform: translateX(-50%) translateY(0);
+      opacity: 1;
+    }
+
+    .keyboard-hint {
+      text-align: center;
+      color: var(--text-muted);
+      font-size: 0.8rem;
+      margin-top: 1.5rem;
+    }
+
+    kbd {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 4px;
+      padding: 0.15rem 0.4rem;
+      font-family: inherit;
+      font-size: 0.85em;
+    }
+
+    footer {
+      text-align: center;
+      margin-top: 3rem;
+      padding-top: 2rem;
+      border-top: 1px solid var(--border);
+      color: var(--text-muted);
+      font-size: 0.85rem;
+    }
+
+    footer a {
+      color: var(--accent);
+      text-decoration: none;
+    }
+
+    footer a:hover {
+      text-decoration: underline;
+    }
+
+    @media (max-width: 600px) {
+      .container {
+        padding: 1.5rem 1rem;
+      }
+
+      h1 {
+        font-size: 2rem;
+      }
+
+      .actions {
+        flex-direction: column;
+      }
+
+      .btn-primary {
+        min-width: unset;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <header>
+      <h1>📋 Standup</h1>
+      <p class="subtitle">Quick daily standup notes generator</p>
+      <div class="date-display">
+        <span>📅</span>
+        <span id="currentDate"></span>
+      </div>
+    </header>
+
+    <div class="main-card">
+      <div class="section" data-section="yesterday">
+        <div class="section-header">
+          <span class="section-icon">✅</span>
+          <span class="section-title">Yesterday</span>
+          <span class="section-hint">What did you complete?</span>
+        </div>
+        <div class="items-list" id="yesterdayList">
+          <div class="item-row">
+            <textarea class="item-input" placeholder="Completed code review for PR #123" rows="1" oninput="autoResize(this); updatePreview()"></textarea>
+            <button class="remove-btn" onclick="removeItem(this)" title="Remove">×</button>
+          </div>
+        </div>
+        <button class="add-btn" onclick="addItem('yesterday')">
+          <span>+</span> Add item
+        </button>
+      </div>
+
+      <div class="section" data-section="today">
+        <div class="section-header">
+          <span class="section-icon">🎯</span>
+          <span class="section-title">Today</span>
+          <span class="section-hint">What will you work on?</span>
+        </div>
+        <div class="items-list" id="todayList">
+          <div class="item-row">
+            <textarea class="item-input" placeholder="Implement user authentication flow" rows="1" oninput="autoResize(this); updatePreview()"></textarea>
+            <button class="remove-btn" onclick="removeItem(this)" title="Remove">×</button>
+          </div>
+        </div>
+        <button class="add-btn" onclick="addItem('today')">
+          <span>+</span> Add item
+        </button>
+      </div>
+
+      <div class="section" data-section="blockers">
+        <div class="section-header">
+          <span class="section-icon">🚧</span>
+          <span class="section-title">Blockers</span>
+          <span class="section-hint">Any impediments?</span>
+        </div>
+        <div class="items-list" id="blockersList">
+          <div class="item-row">
+            <textarea class="item-input" placeholder="Waiting for API specs from backend team" rows="1" oninput="autoResize(this); updatePreview()"></textarea>
+            <button class="remove-btn" onclick="removeItem(this)" title="Remove">×</button>
+          </div>
+        </div>
+        <button class="add-btn" onclick="addItem('blockers')">
+          <span>+</span> Add item
+        </button>
+      </div>
+    </div>
+
+    <div class="preview-section">
+      <div class="preview-header">
+        <span class="preview-title">
+          <span>👁️</span> Preview
+        </span>
+        <select class="format-select" id="formatSelect" onchange="updatePreview()">
+          <option value="markdown">Markdown</option>
+          <option value="slack">Slack</option>
+          <option value="plain">Plain Text</option>
+          <option value="bullet">Bullet Points</option>
+        </select>
+      </div>
+      <div class="preview-content" id="preview">Start typing to see preview...</div>
+    </div>
+
+    <div class="actions">
+      <button class="btn btn-primary" onclick="copyToClipboard()">
+        <span>📋</span> Copy to Clipboard
+      </button>
+      <button class="btn btn-secondary" onclick="saveAsTemplate()">
+        <span>💾</span> Save Template
+      </button>
+      <button class="btn btn-secondary" onclick="clearAll()">
+        <span>🗑️</span> Clear
+      </button>
+    </div>
+
+    <div class="templates-section" style="margin-top: 1.5rem;">
+      <div class="templates-header">
+        <span class="templates-title">
+          <span>📁</span> Saved Templates
+        </span>
+      </div>
+      <div class="templates-list" id="templatesList">
+        <div class="empty-templates">No templates saved yet. Create one by clicking "Save Template".</div>
+      </div>
+    </div>
+
+    <p class="keyboard-hint">
+      <kbd>Ctrl</kbd> + <kbd>Enter</kbd> to copy • <kbd>Tab</kbd> to navigate
+    </p>
+
+    <footer>
+      <p>Built with ☕ by <a href="https://entazis.dev" target="_blank">entazis.dev</a></p>
+    </footer>
+  </div>
+
+  <div class="toast" id="toast">Copied to clipboard!</div>
+
+  <script>
+    // Initialize
+    document.addEventListener('DOMContentLoaded', () => {
+      updateDate();
+      loadTemplates();
+      loadDraft();
+      updatePreview();
+      
+      // Auto-resize all textareas
+      document.querySelectorAll('.item-input').forEach(autoResize);
+    });
+
+    // Keyboard shortcuts
+    document.addEventListener('keydown', (e) => {
+      if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') {
+        e.preventDefault();
+        copyToClipboard();
+      }
+    });
+
+    function updateDate() {
+      const options = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
+      document.getElementById('currentDate').textContent = new Date().toLocaleDateString('en-US', options);
+    }
+
+    function autoResize(el) {
+      el.style.height = 'auto';
+      el.style.height = el.scrollHeight + 'px';
+    }
+
+    function addItem(section) {
+      const list = document.getElementById(section + 'List');
+      const row = document.createElement('div');
+      row.className = 'item-row';
+      row.innerHTML = `
+        <textarea class="item-input" placeholder="Add details..." rows="1" oninput="autoResize(this); updatePreview()"></textarea>
+        <button class="remove-btn" onclick="removeItem(this)" title="Remove">×</button>
+      `;
+      list.appendChild(row);
+      row.querySelector('.item-input').focus();
+      saveDraft();
+    }
+
+    function removeItem(btn) {
+      const row = btn.parentElement;
+      const list = row.parentElement;
+      if (list.children.length > 1) {
+        row.remove();
+      } else {
+        row.querySelector('.item-input').value = '';
+      }
+      updatePreview();
+      saveDraft();
+    }
+
+    function getItems(section) {
+      const list = document.getElementById(section + 'List');
+      return Array.from(list.querySelectorAll('.item-input'))
+        .map(input => input.value.trim())
+        .filter(val => val.length > 0);
+    }
+
+    function setItems(section, items) {
+      const list = document.getElementById(section + 'List');
+      list.innerHTML = '';
+      
+      const itemsToAdd = items.length > 0 ? items : [''];
+      itemsToAdd.forEach((item, i) => {
+        const row = document.createElement('div');
+        row.className = 'item-row';
+        row.innerHTML = `
+          <textarea class="item-input" placeholder="${getPlaceholder(section)}" rows="1" oninput="autoResize(this); updatePreview()">${item}</textarea>
+          <button class="remove-btn" onclick="removeItem(this)" title="Remove">×</button>
+        `;
+        list.appendChild(row);
+      });
+      
+      list.querySelectorAll('.item-input').forEach(autoResize);
+    }
+
+    function getPlaceholder(section) {
+      const placeholders = {
+        yesterday: 'Completed code review for PR #123',
+        today: 'Implement user authentication flow',
+        blockers: 'Waiting for API specs from backend team'
+      };
+      return placeholders[section] || 'Add details...';
+    }
+
+    function updatePreview() {
+      const format = document.getElementById('formatSelect').value;
+      const yesterday = getItems('yesterday');
+      const today = getItems('today');
+      const blockers = getItems('blockers');
+
+      let output = '';
+
+      if (yesterday.length === 0 && today.length === 0 && blockers.length === 0) {
+        document.getElementById('preview').textContent = 'Start typing to see preview...';
+        return;
+      }
+
+      switch (format) {
+        case 'markdown':
+          if (yesterday.length) output += `**Yesterday:**\n${yesterday.map(i => `- ${i}`).join('\n')}\n\n`;
+          if (today.length) output += `**Today:**\n${today.map(i => `- ${i}`).join('\n')}\n\n`;
+          if (blockers.length) output += `**Blockers:**\n${blockers.map(i => `- ${i}`).join('\n')}`;
+          break;
+        case 'slack':
+          if (yesterday.length) output += `*Yesterday:*\n${yesterday.map(i => `• ${i}`).join('\n')}\n\n`;
+          if (today.length) output += `*Today:*\n${today.map(i => `• ${i}`).join('\n')}\n\n`;
+          if (blockers.length) output += `*Blockers:*\n${blockers.map(i => `• ${i}`).join('\n')}`;
+          break;
+        case 'plain':
+          if (yesterday.length) output += `Yesterday:\n${yesterday.map(i => `- ${i}`).join('\n')}\n\n`;
+          if (today.length) output += `Today:\n${today.map(i => `- ${i}`).join('\n')}\n\n`;
+          if (blockers.length) output += `Blockers:\n${blockers.map(i => `- ${i}`).join('\n')}`;
+          break;
+        case 'bullet':
+          if (yesterday.length) output += `✅ Yesterday\n${yesterday.map(i => `  • ${i}`).join('\n')}\n\n`;
+          if (today.length) output += `🎯 Today\n${today.map(i => `  • ${i}`).join('\n')}\n\n`;
+          if (blockers.length) output += `🚧 Blockers\n${blockers.map(i => `  • ${i}`).join('\n')}`;
+          break;
+      }
+
+      document.getElementById('preview').textContent = output.trim();
+      saveDraft();
+    }
+
+    function copyToClipboard() {
+      const preview = document.getElementById('preview').textContent;
+      if (preview === 'Start typing to see preview...') {
+        showToast('Nothing to copy!', 'warning');
+        return;
+      }
+      
+      navigator.clipboard.writeText(preview).then(() => {
+        showToast('Copied to clipboard!');
+      }).catch(() => {
+        showToast('Failed to copy', 'error');
+      });
+    }
+
+    function showToast(message, type = 'success') {
+      const toast = document.getElementById('toast');
+      toast.textContent = message;
+      toast.style.background = type === 'success' ? 'var(--success)' : 
+                               type === 'warning' ? 'var(--warning)' : 'var(--danger)';
+      toast.classList.add('show');
+      setTimeout(() => toast.classList.remove('show'), 2000);
+    }
+
+    function clearAll() {
+      if (!confirm('Clear all items?')) return;
+      ['yesterday', 'today', 'blockers'].forEach(section => setItems(section, ['']));
+      updatePreview();
+      localStorage.removeItem('standup_draft');
+    }
+
+    // Templates
+    function loadTemplates() {
+      const templates = JSON.parse(localStorage.getItem('standup_templates') || '[]');
+      renderTemplates(templates);
+    }
+
+    function renderTemplates(templates) {
+      const list = document.getElementById('templatesList');
+      if (templates.length === 0) {
+        list.innerHTML = '<div class="empty-templates">No templates saved yet. Create one by clicking "Save Template".</div>';
+        return;
+      }
+      
+      list.innerHTML = templates.map((t, i) => `
+        <div class="template-chip" onclick="loadTemplate(${i})">
+          <span>${t.name}</span>
+          <span class="delete" onclick="event.stopPropagation(); deleteTemplate(${i})">×</span>
+        </div>
+      `).join('');
+    }
+
+    function saveAsTemplate() {
+      const yesterday = getItems('yesterday');
+      const today = getItems('today');
+      const blockers = getItems('blockers');
+      
+      if (yesterday.length === 0 && today.length === 0 && blockers.length === 0) {
+        showToast('Nothing to save!', 'warning');
+        return;
+      }
+      
+      const name = prompt('Template name:', `Template ${new Date().toLocaleDateString()}`);
+      if (!name) return;
+      
+      const templates = JSON.parse(localStorage.getItem('standup_templates') || '[]');
+      templates.push({ name, yesterday, today, blockers });
+      localStorage.setItem('standup_templates', JSON.stringify(templates));
+      renderTemplates(templates);
+      showToast('Template saved!');
+    }
+
+    function loadTemplate(index) {
+      const templates = JSON.parse(localStorage.getItem('standup_templates') || '[]');
+      const t = templates[index];
+      if (!t) return;
+      
+      setItems('yesterday', t.yesterday);
+      setItems('today', t.today);
+      setItems('blockers', t.blockers);
+      updatePreview();
+      showToast('Template loaded!');
+    }
+
+    function deleteTemplate(index) {
+      if (!confirm('Delete this template?')) return;
+      const templates = JSON.parse(localStorage.getItem('standup_templates') || '[]');
+      templates.splice(index, 1);
+      localStorage.setItem('standup_templates', JSON.stringify(templates));
+      renderTemplates(templates);
+      showToast('Template deleted!');
+    }
+
+    // Draft auto-save
+    function saveDraft() {
+      const draft = {
+        yesterday: getItems('yesterday'),
+        today: getItems('today'),
+        blockers: getItems('blockers'),
+        format: document.getElementById('formatSelect').value,
+        savedAt: Date.now()
+      };
+      localStorage.setItem('standup_draft', JSON.stringify(draft));
+    }
+
+    function loadDraft() {
+      const draft = JSON.parse(localStorage.getItem('standup_draft') || 'null');
+      if (!draft) return;
+      
+      // Only load if draft is from today
+      const today = new Date().toDateString();
+      const draftDate = new Date(draft.savedAt).toDateString();
+      if (today !== draftDate) {
+        localStorage.removeItem('standup_draft');
+        return;
+      }
+      
+      if (draft.yesterday?.length) setItems('yesterday', draft.yesterday);
+      if (draft.today?.length) setItems('today', draft.today);
+      if (draft.blockers?.length) setItems('blockers', draft.blockers);
+      if (draft.format) document.getElementById('formatSelect').value = draft.format;
+    }
+  </script>
+
+  <!-- Tracking -->
+  <script>
+    fetch('/api/track', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        metrics: [{
+          name: 'web_page_visits',
+          type: 'counter',
+          value: 1,
+          labels: { site: 'standup', page: location.pathname }
+        }]
+      })
+    }).catch(() => {});
+  </script>
+</body>
+</html>
